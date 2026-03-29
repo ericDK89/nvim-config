@@ -321,3 +321,8 @@ require("lazy").setup({
 }, {
   checker = { enabled = true, notify = false },
 })
+
+-- ============================================================
+-- Keymaps gerais
+-- ============================================================
+vim.keymap.set("n", "<leader>e", vim.cmd.Ex, { desc = "Explorador de arquivos (netrw)" })
