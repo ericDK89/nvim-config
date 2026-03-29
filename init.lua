@@ -37,6 +37,15 @@ require("lazy").setup({
   -- Dependências obrigatórias do refactoring.nvim
   { "nvim-lua/plenary.nvim" },
 
+  -- Which-key (popup de keymaps ao pressionar leader)
+  {
+    "folke/which-key.nvim",
+    event = "VeryLazy",
+    config = function()
+      require("which-key").setup()
+    end,
+  },
+
   -- Treesitter (obrigatório pelo refactoring.nvim)
   {
     "nvim-treesitter/nvim-treesitter",
@@ -112,12 +121,12 @@ require("lazy").setup({
         on_attach = function(bufnr)
           local gs = require("gitsigns")
           local opts = { buffer = bufnr }
-          vim.keymap.set("n", "]h", gs.next_hunk,                         opts)
-          vim.keymap.set("n", "[h", gs.prev_hunk,                         opts)
-          vim.keymap.set("n", "<leader>gp", gs.preview_hunk,              opts)
-          vim.keymap.set("n", "<leader>gb", gs.blame_line,                opts)
-          vim.keymap.set("n", "<leader>gr", gs.reset_hunk,                opts)
-          vim.keymap.set("n", "<leader>gd", gs.diffthis,                  opts)
+          vim.keymap.set("n", "]h",          gs.next_hunk,    vim.tbl_extend("force", opts, { desc = "Próximo hunk" }))
+          vim.keymap.set("n", "[h",          gs.prev_hunk,    vim.tbl_extend("force", opts, { desc = "Hunk anterior" }))
+          vim.keymap.set("n", "<leader>gp",  gs.preview_hunk, vim.tbl_extend("force", opts, { desc = "Visualizar hunk" }))
+          vim.keymap.set("n", "<leader>gb",  gs.blame_line,   vim.tbl_extend("force", opts, { desc = "Blame da linha" }))
+          vim.keymap.set("n", "<leader>gr",  gs.reset_hunk,   vim.tbl_extend("force", opts, { desc = "Resetar hunk" }))
+          vim.keymap.set("n", "<leader>gd",  gs.diffthis,     vim.tbl_extend("force", opts, { desc = "Ver diff" }))
         end,
       })
     end,
@@ -326,3 +335,7 @@ require("lazy").setup({
 -- Keymaps gerais
 -- ============================================================
 vim.keymap.set("n", "<leader>e", vim.cmd.Ex, { desc = "Explorador de arquivos (netrw)" })
+
+vim.api.nvim_create_user_command("Tg", function(opts)
+  vim.cmd("ToggleTerm " .. opts.args)
+end, { nargs = 1 })
