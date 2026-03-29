@@ -17,6 +17,9 @@ vim.opt.splitbelow     = true
 vim.g.mapleader        = " "
 vim.g.maplocalleader   = " "
 
+-- Desabilita C-z para não suspender o nvim acidentalmente
+vim.keymap.set({ "n", "i", "v", "x" }, "<C-z>", "<Nop>", { noremap = true, silent = true })
+
 -- ============================================================
 -- Bootstrap lazy.nvim
 -- ============================================================
