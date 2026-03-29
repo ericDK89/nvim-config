@@ -332,9 +332,37 @@ require("lazy").setup({
 })
 
 -- ============================================================
+-- Clipboard compartilhado com o sistema
+vim.opt.clipboard = "unnamedplus"
+
+-- ============================================================
+-- Auto-reload de arquivos alterados externamente
+-- ============================================================
+vim.opt.autoread = true
+vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHoldI" }, {
+  pattern = "*",
+  callback = function()
+    if vim.fn.mode() ~= "c" then
+      vim.cmd("checktime")
+    end
+  end,
+})
+
+-- ============================================================
 -- Keymaps gerais
 -- ============================================================
 vim.keymap.set("n", "<leader>e", vim.cmd.Ex, { desc = "Explorador de arquivos (netrw)" })
+
+-- Flash na linha ao yankar
+vim.api.nvim_create_autocmd("TextYankPost", {
+  pattern = "*",
+  callback = function()
+    vim.highlight.on_yank({ higroup = "IncSearch", timeout = 150 })
+  end,
+})
+
+-- Ctrl+A seleciona tudo
+vim.keymap.set("n", "<C-a>", "ggVG", { desc = "Selecionar tudo" })
 
 vim.api.nvim_create_user_command("Tg", function(opts)
   vim.cmd("ToggleTerm " .. opts.args)
