@@ -37,6 +37,38 @@ require("lazy").setup({
   -- Dependências obrigatórias do refactoring.nvim
   { "nvim-lua/plenary.nvim" },
 
+  -- Colorscheme — moonfly
+  {
+    "bluz71/vim-moonfly-colors",
+    name = "moonfly",
+    priority = 1000,
+    config = function()
+      vim.cmd.colorscheme("moonfly")
+    end,
+  },
+
+  -- Formatter (conform.nvim)
+  {
+    "stevearc/conform.nvim",
+    event = "BufWritePre",
+    config = function()
+      require("conform").setup({
+        formatters_by_ft = {
+          javascript  = { "prettier" },
+          typescript  = { "prettier" },
+          html        = { "prettier" },
+          css         = { "prettier" },
+          json        = { "prettier" },
+          lua         = { "stylua" },
+        },
+        format_on_save = {
+          timeout_ms = 500,
+          lsp_fallback = true,
+        },
+      })
+    end,
+  },
+
   -- Which-key (popup de keymaps ao pressionar leader)
   {
     "folke/which-key.nvim",
@@ -316,7 +348,7 @@ require("lazy").setup({
       end, { desc = "Debug: printf" })
 
       -- Imprimir variável sob cursor (normal + visual)
-      vim.keymap.set({ "x", "n" }, "<leader>rv", function()
+      vim.keymap.set({ "x", "n" }, "<leader>rpv", function()
         require("refactoring").debug.print_var()
       end, { desc = "Debug: print var" })
 
@@ -367,3 +399,22 @@ vim.keymap.set("n", "<C-a>", "ggVG", { desc = "Selecionar tudo" })
 vim.api.nvim_create_user_command("Tg", function(opts)
   vim.cmd("ToggleTerm " .. opts.args)
 end, { nargs = 1 })
+
+-- ============================================================
+-- Limpar arquivos de swap
+-- ============================================================
+local function clean_swaps()
+  local swapdir = vim.fn.stdpath("state") .. "/swap"
+  local files = vim.fn.glob(swapdir .. "/**/*.sw?", false, true)
+  if #files == 0 then
+    vim.notify("Nenhum swap encontrado.", vim.log.levels.INFO)
+    return
+  end
+  for _, f in ipairs(files) do
+    vim.fn.delete(f)
+  end
+  vim.notify(#files .. " swap(s) apagado(s).", vim.log.levels.INFO)
+end
+
+vim.api.nvim_create_user_command("SwapClean", clean_swaps, { desc = "Apagar todos os swaps" })
+vim.keymap.set("n", "<leader>sc", clean_swaps, { desc = "Swap: limpar todos" })
