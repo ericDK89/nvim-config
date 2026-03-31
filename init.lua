@@ -16,6 +16,13 @@ vim.opt.splitright     = true
 vim.opt.splitbelow     = true
 vim.g.mapleader        = " "
 vim.g.maplocalleader   = " "
+vim.opt.scrolloff      = 8
+vim.opt.ignorecase     = true
+vim.opt.smartcase      = true
+vim.opt.undofile       = false
+vim.opt.swapfile       = false
+vim.opt.backup         = false
+vim.opt.writebackup    = false
 
 -- Desabilita C-z para não suspender o nvim acidentalmente
 vim.keymap.set({ "n", "i", "v", "x" }, "<C-z>", "<Nop>", { noremap = true, silent = true })
@@ -40,6 +47,18 @@ require("lazy").setup({
   -- Dependências obrigatórias do refactoring.nvim
   { "nvim-lua/plenary.nvim" },
 
+  -- Explorador de arquivos (substitui netrw)
+  {
+    "stevearc/oil.nvim",
+    lazy = false,
+    config = function()
+      require("oil").setup({
+        view_options = { show_hidden = true },
+      })
+      vim.keymap.set("n", "<leader>e", "<cmd>Oil<CR>", { desc = "Explorador de arquivos (oil)" })
+    end,
+  },
+
   -- Colorscheme — moonfly
   {
     "bluz71/vim-moonfly-colors",
@@ -57,12 +76,14 @@ require("lazy").setup({
     config = function()
       require("conform").setup({
         formatters_by_ft = {
-          javascript  = { "prettier" },
-          typescript  = { "prettier" },
-          html        = { "prettier" },
-          css         = { "prettier" },
-          json        = { "prettier" },
-          lua         = { "stylua" },
+          javascript      = { "prettier" },
+          typescript      = { "prettier" },
+          javascriptreact = { "prettier" },
+          typescriptreact = { "prettier" },
+          html            = { "prettier" },
+          css             = { "prettier" },
+          json            = { "prettier" },
+          lua             = { "stylua" },
         },
         format_on_save = {
           timeout_ms = 500,
@@ -77,7 +98,13 @@ require("lazy").setup({
     "folke/which-key.nvim",
     event = "VeryLazy",
     config = function()
-      require("which-key").setup()
+      local wk = require("which-key")
+      wk.setup()
+      wk.add({
+        { "<leader>g", group = "git" },
+        { "<leader>r", group = "refactor" },
+        { "<leader>l", group = "live-server" },
+      })
     end,
   },
 
@@ -88,7 +115,7 @@ require("lazy").setup({
     main  = "nvim-treesitter",
     opts  = {
       ensure_installed = {
-        "lua", "javascript", "typescript", "python",
+        "lua", "javascript", "typescript", "tsx", "python",
         "go", "java", "c", "cpp", "ruby", "php", "c_sharp",
       },
       highlight = { enable = true },
@@ -109,7 +136,6 @@ require("lazy").setup({
       telescope.load_extension("fzf")
       local builtin = require("telescope.builtin")
       vim.keymap.set("n", "<leader><leader>", builtin.find_files, { desc = "Find files" })
-      vim.keymap.set("n", "<leader>ff",       builtin.find_files, { desc = "Find files" })
       vim.keymap.set("n", "<leader>fg",       builtin.live_grep,  { desc = "Live grep" })
       vim.keymap.set("n", "<leader>fb",       builtin.buffers,    { desc = "Buffers" })
     end,
@@ -144,6 +170,7 @@ require("lazy").setup({
   -- Git signs (mudanças inline no gutter)
   {
     "lewis6991/gitsigns.nvim",
+    event = "BufRead",
     config = function()
       require("gitsigns").setup({
         signs = {
@@ -207,8 +234,7 @@ require("lazy").setup({
     dependencies = { "williamboman/mason.nvim" },
     config = function()
       require("mason-lspconfig").setup({
-        ensure_installed = { "html", "cssls", "ts_ls" },
-        automatic_installation = true,
+        ensure_installed = { "html", "cssls", "ts_ls", "tailwindcss" },
       })
     end,
   },
@@ -234,15 +260,12 @@ require("lazy").setup({
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<CR>"]      = cmp.mapping.confirm({ select = true }),
           ["<Tab>"]     = cmp.mapping(function(fallback)
-            local supermaven = require("supermaven-nvim.completion_preview")
             if cmp.visible() then
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
-            elseif supermaven.suggestion_preview ~= nil and supermaven.suggestion_preview ~= "" then
-              supermaven.on_accept_suggestion()
             else
-              fallback()
+              fallback() -- aciona o Tab do supermaven se registrado
             end
           end, { "i", "s" }),
           ["<S-Tab>"]   = cmp.mapping(function(fallback)
@@ -277,13 +300,13 @@ require("lazy").setup({
         vim.keymap.set("n", "gd",         vim.lsp.buf.definition,    opts)
         vim.keymap.set("n", "K",          vim.lsp.buf.hover,         opts)
         vim.keymap.set("n", "<leader>ca", vim.lsp.buf.code_action,   opts)
-        vim.keymap.set("n", "<leader>rn", vim.lsp.buf.rename,        opts)
+        vim.keymap.set("n", "<F2>",        vim.lsp.buf.rename,        opts)
         vim.keymap.set("n", "gr",         vim.lsp.buf.references,    opts)
         vim.keymap.set("n", "<leader>d",  vim.diagnostic.open_float, opts)
       end
 
       vim.lsp.config("*", { capabilities = capabilities, on_attach = on_attach })
-      vim.lsp.enable({ "html", "cssls", "ts_ls" })
+      vim.lsp.enable({ "html", "cssls", "ts_ls", "tailwindcss" })
     end,
   },
 
@@ -296,7 +319,9 @@ require("lazy").setup({
       "nvim-lua/plenary.nvim",
       "nvim-treesitter/nvim-treesitter",
     },
-    lazy = false,
+    keys = { "<leader>re", "<leader>rf", "<leader>rv", "<leader>ri",
+             "<leader>rI", "<leader>rb", "<leader>rr", "<leader>rp",
+             "<leader>rpv", "<leader>rc" },
     config = function()
       require("refactoring").setup({
         -- Solicita tipo de retorno ao extrair função (útil em Go, C++, Java)
@@ -362,6 +387,16 @@ require("lazy").setup({
     end,
   },
 
+  -- Leap — navegação rápida pelo buffer (s + 2 chars)
+  {
+    url = "https://codeberg.org/andyg/leap.nvim",
+    config = function()
+      vim.keymap.set({ "n", "x", "o" }, "s",  "<Plug>(leap-forward)")
+      vim.keymap.set({ "n", "x", "o" }, "S",  "<Plug>(leap-backward)")
+      vim.keymap.set({ "n", "x", "o" }, "gs", "<Plug>(leap-from-window)")
+    end,
+  },
+
 }, {
   checker = { enabled = true, notify = false },
 })
@@ -386,7 +421,6 @@ vim.api.nvim_create_autocmd({ "FocusGained", "BufEnter", "CursorHold", "CursorHo
 -- ============================================================
 -- Keymaps gerais
 -- ============================================================
-vim.keymap.set("n", "<leader>e", vim.cmd.Ex, { desc = "Explorador de arquivos (netrw)" })
 
 -- Flash na linha ao yankar
 vim.api.nvim_create_autocmd("TextYankPost", {
