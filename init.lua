@@ -203,20 +203,15 @@ require("lazy").setup({
     },
   },
 
-  -- Supermaven (AI suggestions com Tab)
+  -- Copilot (AI suggestions)
   {
-    "supermaven-inc/supermaven-nvim",
+    "github/copilot.vim",
     event = "InsertEnter",
     config = function()
-      require("supermaven-nvim").setup({
-        keymaps = {
-          accept_suggestion = "<Tab>",
-          clear_suggestion  = "<C-]>",
-          accept_word       = "<C-j>",
-        },
-        -- Tab é gerenciado pelo nvim-cmp acima; desativa o keymap interno
-        disable_keymaps = false,
-      })
+      -- Tab é gerenciado pelo Copilot; dismiss e navegação de sugestões
+      vim.keymap.set("i", "<C-]>",  "<Plug>(copilot-dismiss)",  { desc = "Copilot: descartar" })
+      vim.keymap.set("i", "<M-]>",  "<Plug>(copilot-next)",     { desc = "Copilot: próxima sugestão" })
+      vim.keymap.set("i", "<M-[>",  "<Plug>(copilot-previous)", { desc = "Copilot: sugestão anterior" })
     end,
   },
 
@@ -248,6 +243,7 @@ require("lazy").setup({
       "hrsh7th/cmp-path",
       "L3MON4D3/LuaSnip",
       "saadparwaiz1/cmp_luasnip",
+      "github/copilot.vim",
     },
     config = function()
       local cmp     = require("cmp")
@@ -259,22 +255,24 @@ require("lazy").setup({
         mapping = cmp.mapping.preset.insert({
           ["<C-Space>"] = cmp.mapping.complete(),
           ["<CR>"]      = cmp.mapping.confirm({ select = true }),
-          ["<Tab>"]     = cmp.mapping(function(fallback)
+          -- Tab reservado ao Copilot; usar C-n/C-p para navegar no menu
+          ["<C-j>"]     = cmp.mapping(function(fallback)
             if cmp.visible() then
               cmp.select_next_item()
             elseif luasnip.expand_or_jumpable() then
               luasnip.expand_or_jump()
             else
-              fallback() -- aciona o Tab do supermaven se registrado
+              fallback()
             end
           end, { "i", "s" }),
-          ["<S-Tab>"]   = cmp.mapping(function(fallback)
+          ["<C-k>"]     = cmp.mapping(function(fallback)
             if cmp.visible() then cmp.select_prev_item()
             elseif luasnip.jumpable(-1) then luasnip.jump(-1)
             else fallback() end
           end, { "i", "s" }),
         }),
         sources = cmp.config.sources({
+          { name = "copilot" },
           { name = "supermaven" },
           { name = "nvim_lsp" },
           { name = "luasnip" },
